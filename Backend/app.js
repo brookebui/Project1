@@ -10,12 +10,50 @@ const app = express();
 
 const dbService = require('./dbService');
 
+const mysql = require('mysql');
+const db = mysql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "",
+    database: "web_app",
+    port: 3306
+});
+
 
 app.use(cors());
 app.use(express.json())
 app.use(express.urlencoded({extended: false}));
 
 // create
+app.post('/signup', (request, response) => {
+    const { username, password, firstname, lastname, salary, age } = request.body;
+    const sql = "INSERT INTO users (username, password, firstname, lastname, salary, age) VALUES (?, ?, ?, ?, ?, ?)";
+    
+    db.query(sql, [username, password, firstname, lastname, salary, age], (err, data) => {
+        if(err){
+            console.error(err);
+            return response.status(500).json({ error: "Error creating user" });
+        }
+        return response.json({ success: true, data: data });
+    })
+});
+
+app.post('/login', (request, response) => {
+    const sql = "SELECT * FROM users WHERE username = ? AND password = ?";
+    
+    db.query(sql, [request.body.username, request.body.password], (err, data) => {
+        if(err){
+            console.error(err);
+            return response.status(500).json({ error: "Error during login" });
+        }
+        if(data.length > 0) {
+            return response.json({ success: true, user: data[0] });
+        } else {
+            return response.json({ success: false });
+        }
+    })
+});
+
 app.post('/insert', (request, response) => {
     console.log("app: insert a row.");
     // console.log(request.body); 
@@ -125,7 +163,6 @@ app.get('/testdb', (request, response) => {
     .then(data => response.json({data: data}))
     .catch(err => console.log(err));
 });
-
 
 // set up the web server listener
 // if we use .env to configure
