@@ -47,6 +47,12 @@ app.post('/login', (request, response) => {
             return response.status(500).json({ error: "Error during login" });
         }
         if(data.length > 0) {
+            const updateSql = "UPDATE users SET signintime = CURRENT_TIMESTAMP WHERE username = ?";
+            db.query(updateSql, [request.body.username], (updateErr) => {
+                if(updateErr) {
+                    console.error(updateErr);
+                }
+            });
             return response.json({ success: true, user: data[0] });
         } else {
             return response.json({ success: false });
@@ -75,32 +81,21 @@ app.post('/insert', (request, response) => {
 
 // read 
 app.get('/getAll', (request, response) => {
-    
     const db = dbService.getDbServiceInstance();
-
+    const result = db.getAllData();
     
-    const result =  db.getAllData(); // call a DB function
-
     result
     .then(data => response.json({data: data}))
     .catch(err => console.log(err));
 });
 
 
-app.get('/search/:name', (request, response) => { // we can debug by URL
-    
-    const {name} = request.params;
-    
-    console.log(name);
-
+app.get('/search/:term', (request, response) => {
+    const {term} = request.params;
     const db = dbService.getDbServiceInstance();
-
-    let result;
-    if(name === "all") // in case we want to search all
-       result = db.getAllData()
-    else 
-       result =  db.searchByName(name); // call a DB function
-
+    
+    const result = term === "all" ? db.getAllData() : db.searchUsers(term);
+    
     result
     .then(data => response.json({data: data}))
     .catch(err => console.log(err));
@@ -108,22 +103,18 @@ app.get('/search/:name', (request, response) => { // we can debug by URL
 
 
 // update
-app.patch('/update', 
-     (request, response) => {
-          console.log("app: update is called");
-          //console.log(request.body);
-          const{id, name} = request.body;
-          console.log(id);
-          console.log(name);
-          const db = dbService.getDbServiceInstance();
+app.patch('/update', (request, response) => {
+    console.log("app: update is called");
+    const { id, userData } = request.body;
+    console.log('Update request:', { id, userData });
+    
+    const db = dbService.getDbServiceInstance();
+    const result = db.updateUserById(id, userData);
 
-          const result = db.updateNameById(id, name);
-
-          result.then(data => response.json({success: true}))
-          .catch(err => console.log(err)); 
-
-     }
-);
+    result
+    .then(data => response.json({success: true}))
+    .catch(err => console.log(err)); 
+});
 
 // delete service
 app.delete('/delete/:id', 

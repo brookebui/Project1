@@ -37,9 +37,10 @@ const connection = mysql.createConnection({
 
 connection.connect((err) => {
      if(err){
-        console.log(err.message);
+        console.error(err.message);
+     } else {
+        console.log('db ' + connection.state);
      }
-     console.log('db ' + connection.state);    // to see if the DB is connected or not
 });
 
 // the following are database functions, 
@@ -92,7 +93,7 @@ class DbService{
            // use await to call an asynchronous function
            const response = await new Promise((resolve, reject) => 
               {
-                  const query = "SELECT * FROM names;";
+                  const query = "SELECT * FROM Users;";
                   connection.query(query, 
                        (err, results) => {
                              if(err) reject(new Error(err.message));
@@ -111,63 +112,13 @@ class DbService{
         }
    }
 
-
-   async insertNewName(name){
+   async deleteRowById(username){
          try{
-            const dateAdded = new Date();
-            // use await to call an asynchronous function
-            const insertId = await new Promise((resolve, reject) => 
-            {
-               const query = "INSERT INTO names (name, date_added) VALUES (?, ?);";
-               connection.query(query, [name, dateAdded], (err, result) => {
-                   if(err) reject(new Error(err.message));
-                   else resolve(result.insertId);
-               });
-            });
-            console.log(insertId);  // for debugging to see the result of select
-            return{
-                 id: insertId,
-                 name: name,
-                 dateAdded: dateAdded
-            }
-         } catch(error){
-               console.log(error);
-         }
-   }
-
-
-
-
-   async searchByName(name){
-        try{
-             const dateAdded = new Date();
-             // use await to call an asynchronous function
-             const response = await new Promise((resolve, reject) => 
-                  {
-                     const query = "SELECT * FROM names where name = ?;";
-                     connection.query(query, [name], (err, results) => {
-                         if(err) reject(new Error(err.message));
-                         else resolve(results);
-                     });
-                  }
-             );
-
-             // console.log(response);  // for debugging to see the result of select
-             return response;
-
-         }  catch(error){
-            console.log(error);
-         }
-   }
-
-   async deleteRowById(id){
-         try{
-              id = parseInt(id, 10);
               // use await to call an asynchronous function
               const response = await new Promise((resolve, reject) => 
                   {
-                     const query = "DELETE FROM names WHERE id = ?;";
-                     connection.query(query, [id], (err, result) => {
+                     const query = "DELETE FROM Users WHERE username = ?;";
+                     connection.query(query, [username], (err, result) => {
                           if(err) reject(new Error(err.message));
                           else resolve(result.affectedRows);
                      });
@@ -178,34 +129,80 @@ class DbService{
                return response === 1? true: false;
 
          }  catch(error){
-              console.log(error);
+              console.error(error);
          }
    }
 
-  
-  async updateNameById(id, newName){
+   async updateUserById(username, userData){
       try{
            console.log("dbService: ");
-           console.log(id);
-           console.log(newName);
-           id = parseInt(id, 10);
+           console.log(username);
+           console.log(userData);
            // use await to call an asynchronous function
            const response = await new Promise((resolve, reject) => 
                {
-                  const query = "UPDATE names SET name = ? WHERE id = ?;";
-                  connection.query(query, [newName, id], (err, result) => {
-                       if(err) reject(new Error(err.message));
-                       else resolve(result.affectedRows);
-                  });
+                  const query = "UPDATE Users SET firstname = ?, lastname = ?, salary = ?, age = ? WHERE username = ?;";
+                  connection.query(query, 
+                      [userData.firstname, userData.lastname, userData.salary, userData.age, username], 
+                      (err, result) => {
+                          if(err) reject(new Error(err.message));
+                          else resolve(result.affectedRows);
+                      }
+                  );
                }
             );
 
             // console.log(response);  // for debugging to see the result of select
             return response === 1? true: false;
       }  catch(error){
-         console.log(error);
+         console.error(error);
       }
-  }
+   }
+
+   async searchUsers(searchTerm){
+        try{
+             // use await to call an asynchronous function
+             const response = await new Promise((resolve, reject) => 
+                  {
+                     const query = `
+                         SELECT * FROM Users  
+                         WHERE username LIKE ? 
+                         OR firstname LIKE ? 
+                         OR lastname LIKE ?
+                     `;
+                     const searchPattern = `%${searchTerm}%`;
+                     connection.query(query, 
+                         [searchPattern, searchPattern, searchPattern], 
+                         (err, results) => {
+                             if(err) reject(new Error(err.message));
+                             else resolve(results);
+                         }
+                     );
+                  }
+             );
+
+             // console.log(response);  // for debugging to see the result of select
+             return response;
+
+         }  catch(error){
+            console.error(error);
+         }
+   }
+
+   async updateSignInTime(username) {
+      try {
+          const response = await new Promise((resolve, reject) => {
+              const query = "UPDATE users SET signintime = CURRENT_TIMESTAMP WHERE username = ?;";
+              connection.query(query, [username], (err, result) => {
+                  if(err) reject(new Error(err.message));
+                  else resolve(result.affectedRows);
+              });
+          });
+          return response === 1;
+      } catch(error) {
+          console.error(error);
+      }
+   }
 }
 
 module.exports = DbService;
