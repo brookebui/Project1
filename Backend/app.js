@@ -90,6 +90,134 @@ app.get('/getAll', (request, response) => {
 });
 
 
+app.get('/search/salary/:min/:max', (request, response) => {
+    const { min, max } = request.params;
+    const db = dbService.getDbServiceInstance();
+    
+    const result = db.searchUsersBySalary(min, max);
+    
+    result
+    .then(data => response.json({data: data}))
+    .catch(err => console.log(err));
+});
+
+app.get('/search/age/:min/:max', (request, response) => {
+    const { min, max } = request.params;
+    const db = dbService.getDbServiceInstance();
+    
+    const result = db.searchUsersByAge(min, max);
+    
+    result
+    .then(data => response.json({data: data}))
+    .catch(err => console.log(err));
+});
+
+app.get('/search/registered-after/:username', (request, response) => {
+    const { username } = request.params;
+    console.log('\n************************************');
+    console.log('REGISTRATION SEARCH ENDPOINT CALLED');
+    console.log('Username to search:', username);
+    console.log('************************************\n');
+    
+    if (!username) {
+        console.log('No username provided');
+        return response.json({ data: [] });
+    }
+    
+    const db = dbService.getDbServiceInstance();
+    
+    db.searchUsersRegisteredAfter(username)
+        .then(data => {
+            console.log('\n************************************');
+            console.log('SEARCH RESULTS:', data);
+            console.log('Number of results:', data ? data.length : 0);
+            console.log('************************************\n');
+            response.json({data: data || []});
+        })
+        .catch(err => {
+            console.error('\n************************************');
+            console.error('SEARCH ERROR:', err);
+            console.error('************************************\n');
+            response.status(500).json({ error: err.message, data: [] });
+        });
+});
+
+app.get('/search/never-signed-in', (request, response) => {
+    console.log('\n************************************');
+    console.log('NEVER SIGNED IN SEARCH ENDPOINT CALLED');
+    console.log('************************************\n');
+    
+    const db = dbService.getDbServiceInstance();
+    
+    db.searchNeverSignedIn()
+        .then(data => {
+            console.log('\n************************************');
+            console.log('SEARCH RESULTS:', data);
+            console.log('Number of results:', data ? data.length : 0);
+            console.log('************************************\n');
+            response.json({data: data || []});
+        })
+        .catch(err => {
+            console.error('\n************************************');
+            console.error('SEARCH ERROR:', err);
+            console.error('************************************\n');
+            response.status(500).json({ error: err.message, data: [] });
+        });
+});
+
+app.get('/search/same-register-day/:username', (request, response) => {
+    const { username } = request.params;
+    console.log('\n************************************');
+    console.log('SAME REGISTER DAY SEARCH ENDPOINT CALLED');
+    console.log('Username to search:', username);
+    console.log('************************************\n');
+    
+    if (!username) {
+        console.log('No username provided');
+        return response.json({ data: [] });
+    }
+    
+    const db = dbService.getDbServiceInstance();
+    
+    db.searchUsersSameRegisterDay(username)
+        .then(data => {
+            console.log('\n************************************');
+            console.log('SEARCH RESULTS:', data);
+            console.log('Number of results:', data ? data.length : 0);
+            console.log('************************************\n');
+            response.json({data: data || []});
+        })
+        .catch(err => {
+            console.error('\n************************************');
+            console.error('SEARCH ERROR:', err);
+            console.error('************************************\n');
+            response.status(500).json({ error: err.message, data: [] });
+        });
+});
+
+app.get('/search/registered-current-date', (request, response) => {
+    console.log('\n************************************');
+    console.log('CURRENT DATE REGISTRATIONS SEARCH ENDPOINT CALLED');
+    console.log('************************************\n');
+    
+    const db = dbService.getDbServiceInstance();
+    
+    db.searchUsersRegisteredCurrentDate()
+        .then(data => {
+            console.log('\n************************************');
+            console.log('SEARCH RESULTS:', data);
+            console.log('Number of results:', data ? data.length : 0);
+            console.log('************************************\n');
+            response.json({data: data || []});
+        })
+        .catch(err => {
+            console.error('\n************************************');
+            console.error('SEARCH ERROR:', err);
+            console.error('************************************\n');
+            response.status(500).json({ error: err.message, data: [] });
+        });
+});
+
 app.get('/search/:term', (request, response) => {
     const {term} = request.params;
     const db = dbService.getDbServiceInstance();
@@ -101,15 +229,14 @@ app.get('/search/:term', (request, response) => {
     .catch(err => console.log(err));
 });
 
-
 // update
 app.patch('/update', (request, response) => {
     console.log("app: update is called");
-    const { id, userData } = request.body;
-    console.log('Update request:', { id, userData });
+    const { username, userData } = request.body;
+    console.log('Update request:', { username, userData });
     
     const db = dbService.getDbServiceInstance();
-    const result = db.updateUserById(id, userData);
+    const result = db.updateUserById(username, userData);
 
     result
     .then(data => response.json({success: true}))

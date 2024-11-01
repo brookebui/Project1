@@ -203,6 +203,240 @@ class DbService{
           console.error(error);
       }
    }
+
+   async searchUsersBySalary(minSalary, maxSalary) {
+       try {
+           const response = await new Promise((resolve, reject) => {
+               const query = `
+                   SELECT * FROM Users  
+                   WHERE salary >= ? AND salary <= ?
+               `;
+               connection.query(query, 
+                   [minSalary, maxSalary], 
+                   (err, results) => {
+                       if(err) reject(new Error(err.message));
+                       else resolve(results);
+                   }
+               );
+           });
+           return response;
+       } catch(error) {
+           console.error(error);
+       }
+   }
+
+   async searchUsersByAge(minAge, maxAge) {
+       try {
+           const response = await new Promise((resolve, reject) => {
+               const query = `
+                   SELECT * FROM Users  
+                   WHERE age >= ? AND age <= ?
+               `;
+               connection.query(query, 
+                   [minAge, maxAge], 
+                   (err, results) => {
+                       if(err) reject(new Error(err.message));
+                       else resolve(results);
+                   }
+               );
+           });
+           return response;
+       } catch(error) {
+           console.error(error);
+       }
+   }
+
+   async searchUsersRegisteredAfter(username) {
+       try {
+           console.log('\n=== Starting searchUsersRegisteredAfter ===');
+           console.log('Input username:', username);
+
+           // First get the reference user's registration date
+           const referenceQuery = `
+               SELECT username, registerday 
+               FROM users 
+               WHERE username = ?
+           `;
+
+           const referenceUser = await new Promise((resolve, reject) => {
+               console.log('Executing reference query:', referenceQuery);
+               connection.query(referenceQuery, [username], (err, results) => {
+                   if (err) {
+                       console.error('Reference query error:', err);
+                       reject(err);
+                   }
+                   console.log('Reference query results:', results);
+                   resolve(results);
+               });
+           });
+
+           if (!referenceUser || referenceUser.length === 0) {
+               console.log('Reference user not found');
+               return [];
+           }
+
+           const referenceDate = referenceUser[0].registerday;
+           console.log('Reference date found:', referenceDate);
+
+           // Now get all users who registered after the reference date
+           const searchQuery = `
+               SELECT * 
+               FROM users 
+               WHERE registerday > ? 
+               AND username != ?
+               ORDER BY registerday ASC
+           `;
+
+           const response = await new Promise((resolve, reject) => {
+               console.log('Executing search query:', searchQuery);
+               console.log('Parameters:', [referenceDate, username]);
+               
+               connection.query(searchQuery, [referenceDate, username], (err, results) => {
+                   if (err) {
+                       console.error('Search query error:', err);
+                       reject(err);
+                   }
+                   console.log('Search query results:', results);
+                   resolve(results);
+               });
+           });
+
+           console.log('=== Finished searchUsersRegisteredAfter ===\n');
+           return response;
+
+       } catch (error) {
+           console.error('Error in searchUsersRegisteredAfter:', error);
+           return [];
+       }
+   }
+
+   async searchNeverSignedIn() {
+       try {
+           console.log('\n=== Starting searchNeverSignedIn ===');
+           
+           const response = await new Promise((resolve, reject) => {
+               const query = `
+                   SELECT * 
+                   FROM Users 
+                   WHERE signintime IS NULL
+                   ORDER BY registerday ASC;
+               `;
+               
+               console.log('Executing query:', query);
+               connection.query(query, [], (err, results) => {
+                   if (err) {
+                       console.error('Query error:', err);
+                       reject(err);
+                   }
+                   console.log('Query results:', results);
+                   resolve(results);
+               });
+           });
+
+           console.log('=== Finished searchNeverSignedIn ===\n');
+           return response;
+
+       } catch (error) {
+           console.error('Error in searchNeverSignedIn:', error);
+           return [];
+       }
+   }
+
+   async searchUsersSameRegisterDay(username) {
+       try {
+           console.log('\n=== Starting searchUsersSameRegisterDay ===');
+           console.log('Input username:', username);
+
+           // First get the reference user's registration date
+           const referenceQuery = `
+               SELECT username, DATE(registerday) as registerday
+               FROM Users 
+               WHERE username = ?
+           `;
+
+           const referenceUser = await new Promise((resolve, reject) => {
+               console.log('Executing reference query:', referenceQuery);
+               connection.query(referenceQuery, [username], (err, results) => {
+                   if (err) {
+                       console.error('Reference query error:', err);
+                       reject(err);
+                   }
+                   console.log('Reference query results:', results);
+                   resolve(results);
+               });
+           });
+
+           if (!referenceUser || referenceUser.length === 0) {
+               console.log('Reference user not found');
+               return [];
+           }
+
+           const referenceDate = referenceUser[0].registerday;
+           console.log('Reference date found:', referenceDate);
+
+           // Now get all users who registered on the same day
+           const searchQuery = `
+               SELECT * 
+               FROM Users 
+               WHERE DATE(registerday) = DATE(?)
+               AND username != ?
+               ORDER BY username ASC
+           `;
+
+           const response = await new Promise((resolve, reject) => {
+               console.log('Executing search query:', searchQuery);
+               console.log('Parameters:', [referenceDate, username]);
+               
+               connection.query(searchQuery, [referenceDate, username], (err, results) => {
+                   if (err) {
+                       console.error('Search query error:', err);
+                       reject(err);
+                   }
+                   console.log('Search query results:', results);
+                   resolve(results);
+               });
+           });
+
+           console.log('=== Finished searchUsersSameRegisterDay ===\n');
+           return response;
+
+       } catch (error) {
+           console.error('Error in searchUsersSameRegisterDay:', error);
+           return [];
+       }
+   }
+
+   async searchUsersRegisteredCurrentDate() {
+       try {
+           console.log('\n=== Starting searchUsersRegisteredCurrentDate ===');
+           
+           const response = await new Promise((resolve, reject) => {
+               const query = `
+                   SELECT * 
+                   FROM Users 
+                   WHERE DATE(registerday) = CURDATE()
+                   ORDER BY username ASC;
+               `;
+               
+               console.log('Executing query:', query);
+               connection.query(query, [], (err, results) => {
+                   if (err) {
+                       console.error('Query error:', err);
+                       reject(err);
+                   }
+                   console.log('Query results:', results);
+                   resolve(results);
+               });
+           });
+
+           console.log('=== Finished searchUsersRegisteredCurrentDate ===\n');
+           return response;
+
+       } catch (error) {
+           console.error('Error in searchUsersRegisteredCurrentDate:', error);
+           return [];
+       }
+   }
 }
 
 module.exports = DbService;

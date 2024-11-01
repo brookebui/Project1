@@ -12,6 +12,13 @@ function Home() {
         age: ''
     });
     const [showUpdateSection, setShowUpdateSection] = useState(false);
+    const [minSalary, setMinSalary] = useState('');
+    const [maxSalary, setMaxSalary] = useState('');
+    const [minAge, setMinAge] = useState('');
+    const [maxAge, setMaxAge] = useState('');
+    const [referenceUser, setReferenceUser] = useState('');
+    const [showNeverSignedIn, setShowNeverSignedIn] = useState(false);
+    const [sameRegisterDayUser, setSameRegisterDayUser] = useState('');
 
     // Fetch all data when component mounts
     useEffect(() => {
@@ -82,6 +89,226 @@ function Home() {
             .catch(err => console.log(err));
     };
 
+    const handleSalarySearch = () => {
+        if (!minSalary || !maxSalary) return;
+        
+        axios.get(`http://localhost:5050/search/salary/${minSalary}/${maxSalary}`)
+            .then(response => {
+                setUsers(response.data.data || []);
+                setMinSalary('');
+                setMaxSalary('');
+            })
+            .catch(err => console.log(err));
+    };
+
+    const handleAgeSearch = () => {
+        if (!minAge || !maxAge) return;
+        
+        axios.get(`http://localhost:5050/search/age/${minAge}/${maxAge}`)
+            .then(response => {
+                setUsers(response.data.data || []);
+                setMinAge('');
+                setMaxAge('');
+            })
+            .catch(err => console.log(err));
+    };
+
+    const handleRegistrationSearch = () => {
+        if (!referenceUser) return;
+        
+        setUsers([{ 
+            username: 'Loading...', 
+            firstname: 'Please wait', 
+            lastname: '', 
+            salary: 0, 
+            age: 0 
+        }]);
+        
+        const url = `http://localhost:5050/search/registered-after/${referenceUser.trim()}`;
+        console.log('Making request to:', url);
+        
+        axios.get(url)
+            .then(response => {
+                console.log('Full response:', response);
+                if (response.data && response.data.data) {
+                    if (response.data.data.length === 0) {
+                        setUsers([{
+                            username: 'No Results',
+                            firstname: 'No users found registered after',
+                            lastname: referenceUser,
+                            salary: 0,
+                            age: 0
+                        }]);
+                    } else {
+                        setUsers(response.data.data);
+                    }
+                } else {
+                    setUsers([{
+                        username: 'Error',
+                        firstname: 'No data received from server',
+                        lastname: '',
+                        salary: 0,
+                        age: 0
+                    }]);
+                }
+                setReferenceUser('');
+            })
+            .catch(err => {
+                console.error('Registration search error:', err);
+                setUsers([{
+                    username: 'Error',
+                    firstname: 'Search failed',
+                    lastname: err.message,
+                    salary: 0,
+                    age: 0
+                }]);
+            });
+    };
+
+    const handleNeverSignedInSearch = () => {
+        setUsers([{ 
+            username: 'Loading...', 
+            firstname: 'Please wait', 
+            lastname: '', 
+            salary: 0, 
+            age: 0 
+        }]);
+        
+        axios.get('http://localhost:5050/search/never-signed-in')
+            .then(response => {
+                console.log('Never signed in search response:', response);
+                if (response.data && response.data.data) {
+                    if (response.data.data.length === 0) {
+                        setUsers([{
+                            username: 'No Results',
+                            firstname: 'All users have signed in at least once',
+                            lastname: '',
+                            salary: 0,
+                            age: 0
+                        }]);
+                    } else {
+                        setUsers(response.data.data);
+                    }
+                } else {
+                    setUsers([{
+                        username: 'Error',
+                        firstname: 'No data received from server',
+                        lastname: '',
+                        salary: 0,
+                        age: 0
+                    }]);
+                }
+            })
+            .catch(err => {
+                console.error('Never signed in search error:', err);
+                setUsers([{
+                    username: 'Error',
+                    firstname: 'Search failed',
+                    lastname: err.message,
+                    salary: 0,
+                    age: 0
+                }]);
+            });
+    };
+
+    const handleSameRegisterDaySearch = () => {
+        if (!sameRegisterDayUser) return;
+        
+        setUsers([{ 
+            username: 'Loading...', 
+            firstname: 'Please wait', 
+            lastname: '', 
+            salary: 0, 
+            age: 0 
+        }]);
+        
+        const url = `http://localhost:5050/search/same-register-day/${sameRegisterDayUser.trim()}`;
+        console.log('Making request to:', url);
+        
+        axios.get(url)
+            .then(response => {
+                console.log('Same register day search response:', response);
+                if (response.data && response.data.data) {
+                    if (response.data.data.length === 0) {
+                        setUsers([{
+                            username: 'No Results',
+                            firstname: 'No other users registered on the same day as',
+                            lastname: sameRegisterDayUser,
+                            salary: 0,
+                            age: 0
+                        }]);
+                    } else {
+                        setUsers(response.data.data);
+                    }
+                } else {
+                    setUsers([{
+                        username: 'Error',
+                        firstname: 'No data received from server',
+                        lastname: '',
+                        salary: 0,
+                        age: 0
+                    }]);
+                }
+                setSameRegisterDayUser('');
+            })
+            .catch(err => {
+                console.error('Same register day search error:', err);
+                setUsers([{
+                    username: 'Error',
+                    firstname: 'Search failed',
+                    lastname: err.message,
+                    salary: 0,
+                    age: 0
+                }]);
+            });
+    };
+
+    const handleCurrentDateRegistrationsSearch = () => {
+        setUsers([{ 
+            username: 'Loading...', 
+            firstname: 'Please wait', 
+            lastname: '', 
+            salary: 0, 
+            age: 0 
+        }]);
+        
+        axios.get('http://localhost:5050/search/registered-current-date')
+            .then(response => {
+                console.log('Current date registrations search response:', response);
+                if (response.data && response.data.data) {
+                    if (response.data.data.length === 0) {
+                        setUsers([{
+                            username: 'No Results',
+                            firstname: 'No users registered on current date',
+                            lastname: '',
+                            salary: 0,
+                            age: 0
+                        }]);
+                    } else {
+                        setUsers(response.data.data);
+                    }
+                } else {
+                    setUsers([{
+                        username: 'Error',
+                        firstname: 'No data received from server',
+                        lastname: '',
+                        salary: 0,
+                        age: 0
+                    }]);
+                }
+            })
+            .catch(err => {
+                console.error('Current date registrations search error:', err);
+                setUsers([{
+                    username: 'Error',
+                    firstname: 'Search failed',
+                    lastname: err.message,
+                    salary: 0,
+                    age: 0
+                }]);
+            });
+    };
+
     return (
         <div className="container mt-5">
 
@@ -99,6 +326,108 @@ function Home() {
                     className="btn btn-secondary"
                 >
                     Search
+                </button>
+            </div>
+
+            {/* Salary Search Section */}
+            <div className="mb-3 d-flex gap-2">
+                <input 
+                    type="number"
+                    value={minSalary}
+                    onChange={(e) => setMinSalary(e.target.value)}
+                    className="form-control"
+                    placeholder="Min Salary"
+                />
+                <input 
+                    type="number"
+                    value={maxSalary}
+                    onChange={(e) => setMaxSalary(e.target.value)}
+                    className="form-control"
+                    placeholder="Max Salary"
+                />
+                <button 
+                    onClick={handleSalarySearch}
+                    className="btn btn-secondary"
+                >
+                    Search by Salary
+                </button>
+            </div>
+
+            {/* Age Search Section */}
+            <div className="mb-3 d-flex gap-2">
+                <input 
+                    type="number"
+                    value={minAge}
+                    onChange={(e) => setMinAge(e.target.value)}
+                    className="form-control"
+                    placeholder="Min Age"
+                />
+                <input 
+                    type="number"
+                    value={maxAge}
+                    onChange={(e) => setMaxAge(e.target.value)}
+                    className="form-control"
+                    placeholder="Max Age"
+                />
+                <button 
+                    onClick={handleAgeSearch}
+                    className="btn btn-secondary"
+                >
+                    Search by Age
+                </button>
+            </div>
+
+            {/* Registration Date Search Section */}
+            <div className="mb-3 d-flex gap-2">
+                <input 
+                    type="text"
+                    value={referenceUser}
+                    onChange={(e) => setReferenceUser(e.target.value)}
+                    className="form-control"
+                    placeholder="Enter username (e.g., john)"
+                />
+                <button 
+                    onClick={handleRegistrationSearch}
+                    className="btn btn-secondary"
+                >
+                    Search Users Registered After
+                </button>
+            </div>
+
+            {/* Never Signed In Search Section */}
+            <div className="mb-3 d-flex gap-2">
+                <button 
+                    onClick={handleNeverSignedInSearch}
+                    className="btn btn-secondary w-100"
+                >
+                    Show Users Who Never Signed In
+                </button>
+            </div>
+
+            {/* Same Register Day Search Section */}
+            <div className="mb-3 d-flex gap-2">
+                <input 
+                    type="text"
+                    value={sameRegisterDayUser}
+                    onChange={(e) => setSameRegisterDayUser(e.target.value)}
+                    className="form-control"
+                    placeholder="Enter username to find others registered same day"
+                />
+                <button 
+                    onClick={handleSameRegisterDaySearch}
+                    className="btn btn-secondary"
+                >
+                    Find Users Registered Same Day
+                </button>
+            </div>
+
+            {/* Current Date Registrations Search Section */}
+            <div className="mb-3 d-flex gap-2">
+                <button 
+                    onClick={handleCurrentDateRegistrationsSearch}
+                    className="btn btn-secondary w-100"
+                >
+                    Show Users Registered Today
                 </button>
             </div>
 
